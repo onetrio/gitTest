@@ -2,4 +2,5 @@
 
 int main(){
 	printf("This id a new file built in other!\n");
+	printf("master modify.\n");
 }

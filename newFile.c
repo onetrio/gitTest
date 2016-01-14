@@ -3,6 +3,7 @@
 
 int main(){
 	int a = 1;
-	printf("%d,HelloWorld!\n",a);
+	int b = 2;
+	printf("%d,%d,HelloWorld!\n",a,b);
 	return 0;
 }
