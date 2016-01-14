@@ -3,6 +3,7 @@
 
 int main(){
 	int a = 1;
-	printf("%d,HelloWorld!\n",a);
+	printf("%d,HelloWorld!,other come!\n",a);
+	printf("other modify!");
 	return 0;
 }
