@@ -1,7 +1,8 @@
 //newFile.c
 #include <stdio.h>
 
-void main(){
+int main(){
 	int a = 1;
-	printf("%d",a);
+	printf("%d,HelloWorld!\n",a);
+	return 0;
 }
