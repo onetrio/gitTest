@@ -1,0 +1,27 @@
+ADB不识别device not found，以下是5条简单方法：
+1.手机usb 数据线连接pc咯，在设备管理器里看看有没的黄色的未安装驱动的设备，有的话就把手机驱动拿过来装下（尽量多刷新几次）。
+2. 在cmd里直接adb shell，有问题的话会出现"device not found"，我呢，参考网上的说法“adb kill-server”再"adbstart-server"..算是一种方式吧。
+3.在任务管理器里把adb.exe关掉，再把IDE也关掉，重启，试试，也算一种方式，有时候会受到等下tadb.exe干扰，此时也要关闭。
+4.还有就是ADT和adb版本，最好升级成最新的，adb version 查看adb版本。如果有这个文件夹的话“platform-tool”，就把里边的东西都复制到 “tool”文件夹中（覆盖），也算一种方式吧。
+在 android 设备的 Linux 内核中把 USB 驱动的 PID VID 修改以后，也许之前的 adb 工具就不能识别设备了，会打印出 "device not found" 的提示，特别是 windows ，adb 驱动也不能用了。这个时候该怎么办呢？比较复杂的方式，就是以上全解决不了，首先看一个解释：
+“USB\VID_05A9&PID_2800\5&1BFE1C47&0&8”请问这句话怎么解释？
+上面的PID，VID又是什么意思？实际上是一个USB设备在Windows系统下作为其唯一标识的ID，准确的名称叫做DevicePath。USB\VID_05A9&PID_2800\5&1BFE1C47&0&8里面，USB代表设备类型，5&1BFE1C47&0&8代表设备连接位置，包括总线位置，控制器位置，控制器编号，端口编号这几项，而VID_05A9&PID_2800则是设备信息，而USB的驱动也正是依赖于这个，VID其实是Vendor ID，而PID则是Product ID，分别代表生产商的编号和生产商内部的产品编号。原则上说一个USB设备必须有PID和VID，属于USB接口芯片的可选设置，通过下载的USB View可以查看！
+一、先搞清现在的 PID ，VID 为多少，例如分别为 aaaa、bbbb（十六进制）
+      对于 linux 如 ubuntu, 插入 设备，再查询 /sys/bus/usb/ 下的相应设备，如 "1-1" 下的 idVender, idProduct 获得。
+      对于 windows, 可从相应设备的属性中获得，进入设备管理器查看。
+
+二、对于windows:
+1. 修改 adb 驱动中的 android_winusb.inf 文件。对照着别的项目加就可以了。
+; My product
+%CompositeAdbInterface% = USB_Install, USB\VID_AAAA&PID_BBBB
+%SingleBootLoaderInterface% = USB_Install, USB\VID_AAAA&PID_BBBB&MI_01
+2. 右击我的电脑->属性->高级->环境变量，添加 ANROID_SDK_HOME 环境变量。如果你有 android SDK, 就设成 SDK 的路径；如果没有，那也没关系，设为你觉得方便的任何路径。
+3. 在前面设置的 ANDROID_SDK_HOME 对应的路径下，寻找 .android 目录，如果没有就创建一个；在 .android 目录下新建一个文件，叫adb_usb.ini, 记住，后缀是 "ini" 哦；添加前面获得的 VID 到 adb_usb.ini 中，如 0xAAAA。
+4. 然后安装 adb 驱动
+5. 进入 DOS cmd, 分别输入 adb kill-server, adb start-server, adb devices；若能看到 devices 列出，那么就成功了。
+
+三、对于linux
+1. 在用户的 home 目录下，寻找 .android 目录，如果没有就创建。在 .android 目录下新建一个文件，叫 adb_usb.ini, 记住，后缀是 "ini" 哦；添加前面获得的 VID 到 adb_usb.ini 中，如 0xAAAA。
+2. 在 shell 中 分别输入 adb kill-server, adb start-server, adb devices；若能看到 devices 列出，那么就成功了。
+这里 kill-server，是 kill 掉 adb 的 daemon，否则，adb 还是保留着先前的 Vender 信息。start-server 就加载了新的 Vender 信息。
+注意：有些人可能用 adb 需要超级用户权限，这时第一步中的home 目录应该为 /root，不想麻烦，直接两个 Home 目录都加上得了。

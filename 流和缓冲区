@@ -1,0 +1,276 @@
+一、流（stream）：这里讨论的是标准I / O术语流（请勿将其与系统V的STREAMS I/O系统相混淆，后者可参见Stevens的《UNIX环境高级编程》第十二章）。 
+
+
+引用：流（stream）是与磁盘或其它外围设备关联的数据的源或目的地。
+
+引用：流是（表达）读写数据的一种可移植的方法，它为一般的I/O操作提供了灵活有效的手段。一个流是一个由指针操作的文件或者是一个物理设备，而这个指针正是指向了这个流。
+
+ 
+引用：不管是交互于诸如终端和磁带驱动器之类的物理设备，还是存取于由结构化存储设备支撑的文件，输入和输出（信息）都被映射为逻辑数据流，而流的属性却远不是诸多输入输出属性的统一。
+
+4）（Kenneth .A.Reek著，徐波译《C和指针（Pointers On C）》第十五章P229） 
+引用：ANSI C进一步对I/O的概念进行了抽象。就C程序而言，所有的I/O操作只是简单地从程序移进或移出字节的事情。因此，毫不惊奇的是，这种字节流便被称为流(stream)。程序只需要关心创建正确的输出字节数据，以及正确地解释从输入读取的字节数据。特定I/O设备的细节对程序员是隐藏的。
+
+引用：流的概念意味着什么呢？ 
+--流是独立于设备之外而操纵外设一种逻辑手段。 
+--大多数外设都是互异的，所以（操纵）它们需要专门的编程技术。 
+--流对程序员隐藏这些不同点，而准许他们以同样的方式来处理大多数外设。 
+--考虑到一连串的字符需要一次读一个，流（相当于）是具有缓冲作用的接口。 
+--个人计算机都是基于流架构的。
+
+各大权威对流的说法有些不一致，我认为流既是数据的源或目的地的抽象，也是源和目的地之间流动信息的表示。但流起码都暗含以下的几个方面： 
+1、流是一个抽象的概念，是对信息的一种表达；在程序中，流就是对某个对象输入输出信息的抽象。就像运输工具是对一切运动载体的抽象一样。 
+2、流是一种“动”的概念，静止存储在介质上的信息只有当它按一定的序列准备“运动”时才称为流。“从程序移进或移出字节”就是“动”的表现。静止的信息具有流的潜力，但不一定是流，就像没有汽油不能行走的汽车一样，它具有运输工具的潜力，但它还不是运输工具（因为它很有可能被当作房子来用了，我就在大街上看见有精明的商人用火车车厢来做酒吧）。 
+3、流有源头也有目的地；程序中各种移动的信息都有其源和目的，记得编程（特别是汇编）时，老是要确定好某个操作的源操作数和目的操作数。借用佛教一言也即是：“万物皆有因果”，这也就像长江一样，西自唐古拉，而东去太平洋。在高速公路上飞跑的汽车，它必有其出发地和目的地。 
+4、流一定带有某种信息，没有任何内容的流带着自身来表达“空”信息。就像运输工具一样，它不运货的时候就运着自己这一身的零件（包括驾驶员）并把一样东西运到目的地，那就是它自己和一个“跑空车”的信息。流有最小的信息单元就是二进制位，含有最小的信息包就是字节，C标准库提供两种类型的流：二进制流（binary stream）和文本流（text stream）。二进制流是有未经处理的字节构成的序列；文本流是由文本行组成的序列。而在著名的UNIX系统中，文本流和二进制流是相同的（identical）。 
+5、流有源头也有目的地，那么它必定与源头和目的地相关联。但人们操作流的时候，最关心的还是其目的地，也就是一个定向（orientation）的意思，就像司机运货一样，它首要关心的问题是目的地，而非起点（操作者都知道）。在C语言中，通过打开流来关联流及其目的地，使用的函数是fopen()，该函数返回一个指向文件的指针（FILE *），该指针包含了足够的可以控制流准确地到达目的地的信息。 
+FILE是一个结构体（摘自TC2.0中stdio.h文件） 
+/* Definition of the control structure for streams
+*/
+typedef struct  {
+        short           level;          /* fill/empty level of buffer */
+        unsigned        flags;          /* File status flags    */
+        char            fd;             /* File descriptor      */
+        unsigned char   hold;           /* Ungetc char if no buffer */
+        short           bsize;          /* Buffer size          */
+        unsigned char   *buffer;        /* Data transfer buffer */
+        unsigned char   *curp;          /* Current active pointer */
+        unsigned        istemp;         /* Temporary file indicator */
+        short           token;          /* Used for validity checking */
+}       FILE;                           /* This is the FILE object */
+     将它称为流控制结构体（control structure for streams）真好表现出其功能来。举个例子就好像一卡车司机要把货物运到X公司，公司主管就会给他一张地图及X公司的基本信息，这些材料所提供的信息如果足够的话，那么它就能指导着司机准确地将货物送达了。C中FILE这个结构体所起的作用就好像是运输公司把一切有用的指导信息封装起来的档案袋一样。而已有关联的流要终止这种关联，就必须关闭流，使用的函数是fclose()，就像运货公司若不再给X公司运货了，那么他们就必须要终止合作协议了。 
+    这里要注意的是：C语言中stdin、stdout、stderr分别是标准输入流、标准输出流及标准出错流的逻辑目的，他们都默认对应相应的物理终端。在程序运行伊始，不需要进行open()操作，流自动打开
+
+
+二、缓冲区（Buffer）： 
+    为了匹配计算机快速设备和慢速设备间的通信步伐，计算机中大量使用硬件缓冲区（如CPU中的Cache，内存相对于硬盘和CPU），流是传输信息的一种逻辑表示，对流的各种不同操作也可能存在使用缓冲的需求。但是这里的buffer只是一种逻辑概念，不是物理设备。缓冲区存在于流与具体的设备终端或者存储介质上的文件之间。就好像运货到一个公司里一样，合同上的要求是运到X公司，但是实际上是真的把货物运到X公司的总部大楼吗？不是。应该是运到X公司的仓库中。这里的仓库就有点像我们所说的缓冲区了。也可以这么说，流运动到目的，先经过的是缓存区。有时候是不是可以这样理解：stdin、stdout和stderr就是标准输入流、标准输出流及标准出错流的缓存区。 
+
+1、(引自《 Rationale for International Standard Programming Languages C 》) 
+引用：Buffering. UNIX allows the program to control the extent and type of buffering for various purposes. For example, a program can provide its own large I/O buffer to improve efficiency, or can request unbuffered terminal I/O to process each input character as it is 20 entered. Other systems do not necessarily support this generality. Some systems provide only line-at-a-time access to terminal input; some systems support program-allocated buffers only by copying data to and from system-allocated buffers for processing. Buffering is addressed in the Standard by specifying UNIX-like setbuf and setvbuf functions, but permitting great latitude in their implementation. A conforming library need neither 25 attempt the impossible nor respond to a program attempt to improve efficiency by introducing additional overhead.
+
+
+2、（摘自A. D. Marshall《Programming in C UNIX System Calls and Subroutines using C》 
+http://www.cs.cf.ac.uk/Dave/C/） 
+
+引用：Stream I/O is BUFFERED: That is to say a fixed ``chunk'' is read from or written to a file via some temporary storage area (the buffer). This is illustrated in Fig. 1. NOTE the file pointer actually points to this buffer. 
+
+  
+
+Fig.1（见文末） 
+
+引用：Stream I/O Model This leads to efficient I/O but beware: data written to a buffer does not appear in a file (or device) until the buffer is flushed or written out. (\n does this). Any abnormal exit of code can cause problems. 
+
+      标准I / O提供缓存的目的是尽可能减少使用read和write调用的数量。它也对每个I / O流自动地进行缓存管理，避免了应用程序需要考虑这一点所带来的麻烦。不幸的是，标准I / O库令人最感迷惑的也是它的缓存。不同类型缓存往往使人在进行I/O操作时不知所措。标准I / O提供了三种类型的缓存：全缓存、行缓存、无缓存。 
+
+1、 (引自ISO/IEC《 ISO/IEC 9899:1999 (E) 》) 
+
+引用：When a stream is unbuffered, characters are intended to appear from the source or at the destination as soon as possible. Otherwise characters may be accumulated and 
+transmitted to or from the host environment as a block. When a stream is fully buffered, characters are intended to be transmitted to or from the host environment as a block when a buffer is filled. When a stream is line buffered, characters are intended to be transmitted to or from the host environment as a block when a new-line character is encountered. Furthermore, characters are intended to be transmitted as a block to the host environment when a buffer is filled, when input is requested on an unbuffered stream, or when input is requested on a line buffered stream that requires the transmission of characters from the host environment.
+
+
+2、(引自Mike Banahan, Declan Brady and Mark Doran《 The C Book 》) 
+
+引用：There are three types of buffering:  
+Unbuffered Minimum internal storage is used by stdio in an attempt to send or receive data as soon as possible.  
+Line buffered Characters are processed on a line-by-line basis. This is commonly used in interactive environments, and internal buffers are flushed only when full or when a newline is processed.  
+Fully buffered Internal buffers are only flushed when full.  
+The buffering associated with a stream can always be flushed by using fflush explicitly. Support for the various types of buffering is implementation defined, and can be controlled within these limits using setbuf and setvbuf.
+
+
+3、说的最清楚的要数Stevens的《UNIX环境高级编程》了，以下摘自Stevens的《UNIX环境高级编程》第五章： 
+
+引用：标准I / O提供了三种类型的缓存： 
+(1) 全缓存。在这种情况下，当填满标准I / O缓存后才进行实际I / O操作。对于驻在磁盘上的文件通常是由标准I / O库实施全缓存的。在一个流上执行第一次I / O操作时，相关标准I / O函数通常调用m a l l o c（见7 . 8节）获得需使用的缓存。 
+术语刷新（ f l u s h）说明标准I / O缓存的写操作。缓存可由标准I / O例程自动地刷新（例如当填满一个缓存时），或者可以调用函数ff l u s h刷新一个流。值得引起注意的是在U N I X环境中，刷新有两种意思。在标准I / O库方面，刷新意味着将缓存中的内容写到磁盘上（该缓存可以只是局部填写的）。在终端驱动程序方面（例如在第11章中所述的t c f l u s h函数），刷新表示丢弃已存在缓存中的数据。 
+(2) 行缓存。在这种情况下，当在输入和输出中遇到新行符时，标准I / O库执行I / O操作。这允许我们一次输出一个字符（用标准I/O fputc函数），但只有在写了一行之后才进行实际I / O操作。当流涉及一个终端时（例如标准输入和标准输出），典型地使用行缓存。对于行缓存有两个限制。第一个是：因为标准I / O库用来收集每一行的缓存的长度是固定的，所以只要填满了缓存，那么即使还没有写一个新行符，也进行I / O操作。第二个是：任何时候只要通过标准输入输出库要求从( a )一个不带缓存的流，或者( b )一个行缓存的流（它预先要求从内核得到数据）得到输入数据，那么就会造成刷新所有行缓存输出流。在( b )中带了一 
+个在括号中的说明的理由是，所需的数据可能已在该缓存中，它并不要求内核在需要该数据时才进行该操作。很明显，从不带缓存的一个流中进行输入（ ( a )项）要求当时从内核得到数据。 
+(3) 不带缓存。标准I / O库不对字符进行缓存。如果用标准I / O函数写若干字符到不带缓存 
+的流中，则相当于用w r i t e系统调用函数将这些字符写至相关联的打开文件上。标准出错流s t d e r r通常是不带缓存的，这就使得出错信息可以尽快显示出来，而不管它们是否含有一个新行字符。 
+ANSI C要求下列缓存特征： 
+(1) 当且仅当标准输入和标准输出并不涉及交互作用设备时，它们才是全缓存的。 
+(2) 标准出错决不会是全缓存的。 
+但是，这并没有告诉我们如果标准输入和输出涉及交互作用设备时，它们是不带缓存的还 
+是行缓存的，以及标准输出是不带缓存的，还是行缓存的。S V R 4和4 . 3 + B S D的系统默认使用下列类型的缓存： 
+&#8226; 标准出错是不带缓存的。 
+&#8226; 如若是涉及终端设备的其他流，则它们是行缓存的；否则是全缓存的。
+
+
+    我们经常要用到标准输入和输出，而ANSI C对stdin、stdout和stderr的缓存特征没有强行的规定，以至于不同的系统可能有不同的stdin、stdout和stderr的缓存特征。目前主要的缓存特征是：stdin和stdout是行缓存；而stderr是无缓存的。
+
+三、一般标准输入易产生的问题 
+
+stdin和stdout是行缓存，所以在进行标准输入输出时就存在着缓存刷新（flush）的问题。就像仓库一样，如果不进行有效清理，就有可能将已淘汰的东西错误地当作新货发给客户了。stdin和stdout如果不及时刷新的话，就有可能输入或输出错误的数据。 
+    此时，回到本文开头给出的两个例子。第一个例子中在system("pause");这条语句的后面加上printf("%d\n", c);这一句，就会发现打印出c的整数值为10，查一下ASCII码10对应的字符是换行符（Line Feed），这样 
+for (; (c = getchar()) == 'y' || c == 'Y'; )的条件判断为假，所以程序不可能再循环下去。这个换行符LF怎么来的呢？就是我们第一次输入‘y’时按下的回车符。（这里要说明一点是：键盘的回车符在C中被处理成换行符（LF），它与ASCII码中对应的回车符（carriage return ，ASCII为13）是不同的，这样一来依靠键盘一键输入’\r’（carriage return）是不可能了。好在行缓存是以’\n’作为换行标志的）。就是因为标准输入流是行缓存的，所以换行符没有被丢弃反而自动成了下一次的输入了。第二个例子中出错并不是因为有换行符自动做了输入，而是因为某次偶尔的错误输入导致的，程序没了健壮性很大一部分是因为没有考虑到标准输入流具有行缓存特征。 
+
+四、此类问题的解决方法小结 
+
+既然是有垃圾留在了缓冲区就有治标与治本两大方法了。 
+1、	治标 
+a)	清理垃圾。将还驻留在缓存中的无用数据进行清理。 
+---利用fflush()函数来刷新缓存。但是特别要注意的是fflush()的特点。 
+
+（引自ISO/IEC《 ISO/IEC 9899:1999 (E) 》） 
+引用：Description 
+ If stream points to an output stream or an update stream in which the most recent 
+operation was not input, the fflush function causes any unwritten data for that stream to be delivered to the host environment to be written to the file; otherwise, the behavior is undefined. 
+If stream is a null pointer, the fflush function performs this flushing action on all 
+streams for which the behavior is defined above.
+
+以上突显部分就是说明fflush()用于stdin时是不确定的，它可能返回0以表示刷新成功，但事实上它对stdin没有任何动作。因此用fflush()来刷新stdin引入了很多问题，以下是一些例子： 
+
+1)摘自Frequently Asked Questions in comp.lang.c 
+（http://www.lysator.liu.se/c/c-faq/c-faq-toc.html#c-11） 
+
+引用：11.12: How can I flush pending input so that a user's typeahead isn't read at the next prompt?  Will fflush(stdin) work?  
+Answer: fflush is defined only for output streams.  Since its definition of "flush" is to complete the writing of buffered characters (not to discard them), discarding unread input would not be an analogous meaning for fflush on input streams.  There is no standard way to discard unread characters from a stdio input buffer, nor would such a way be sufficient; unread characters can also accumulate in other, OS-level input buffers. 
+
+
+2)  
+引用：Question:http://lists.gnu.org/archive/html/bug-glibc/2005-02/msg00063.html 
+Answer: http://lists.gnu.org/archive/html/bug-glibc/2005-02/msg00073.html
+
+
+3）（http://www.mega-nerd.com/erikd/BOOK/#Q5） 
+
+引用：Q 5 : In chapter 13, listing 6, fflush (stdin) doesn't work like its supposed to. Why is that?  
+This is a bug :-).  
+The problem with the existing code occurs when a program reads user input, then does some time consuming processing (say more than a couple of seconds) before reading more user input. In this situation, the user might type some more on the keyboard while the program is processing and these characters will be buffered by the operating system and read on the next read call. The idea of the existing code was to use fflush (stdin) to flush all the stored characters from the input buffer.  
+As Benjamin Black pointed out, the C Programming FAQ states that the behaviour of fflush () is defined only for output streams. To make matters worse there is no standard ANSI/ISO C way of doing this. Fortunately there is a POSIX solution. The POSIX solution is to use the low-level unbuffered input functions or GNU/Linux specific higher level function which in turn use the lower level ones. There are examples of both here.
+
+
+更详细的解答：http://www.mega-nerd.com/erikd/BOOK/list1306.html 
+
+----利用getchar()在下一次输入之前吃掉第一个字符，这里常被用来吃掉一个换行符（例如第一例中）。这里要注意的是：getchar()是一个宏，等同于宏getc()带参数stdin，它不是函数（虽然此宏中由函数）。并且它每次只能读取一个字符，对于垃圾字符数目不定的情况，就无法把握了。 
+
+（摘自TC2.0中stdio.h文件） 
+
+引用：#define getc(f) \ 
+  ((--((f)->;level) >;= 0) ? (unsigned char)(++(f)->;curp)[-1] : \ 
+_fgetc (f)) 
+#define putc(c,f) \ 
+  ((++((f)->;level) < 0) ? (unsigned char)((++(f)->;curp)[-1]=(c)) : \ 
+_fputc ((c),f)) 
+
+#define getchar()  getc(stdin) 
+#define putchar(c) putc((c), stdout)
+
+
+---另一个就是gets()函数（这个新手最喜欢，而老手最慎重的函数）。gets()读取与stdin相关联的流中的字符串，直到文件结束或换行符，gets()读取换行符并将其舍去。 
+
+(引自ISO/IEC《 ISO/IEC 9899:1999 (E) 》) 
+
+引用：Description 
+The gets function reads characters from the input stream pointed to by stdin, into the array pointed to by s, until end-of-file is encountered or a new-line character is read. Any new-line character is discarded, and a null character is written immediately after the last character read into the array.
+
+
+一般使用gets()都需要一个临时变量来存放这些读出的缓存区残留数据，所以比较浪费资源，使用它时，为了使程序更具模块性，可以用一个函数来实现： 
+void  clear_kb(void)
+
+ /* Clears stdin of any waiting characters. */
+
+}
+
+char junk[80];
+
+gets(junk);
+
+ }
+
+
+但是， gets是一个不推荐使用的函数。问题是调用者在使用gets时不能指定缓存的长度。这样就可能造成缓存越界(如若该行长于缓存长度)，写到缓存之后的存储空间中，从而产生不可予料的后果。很多时候，还是推荐用fgets()函数，就像 
+相对strcpy()函数更推荐使用strncpy()一样。 
+
+----scanf()函数。由于scanf()函数在读取输入值时将跳过空白符、制表符以及换行符，所以在某种程度上，由它读取值时可以不受遗留在缓存中的换行符影响。但是scanf()函数作为输入函数本身就存在居多的不安全因素（处理字符串时不检查buffer边界），使用它就有可能像搬起了一块大石头，一不小心就会砸到自己的脚。 
+
+b)	出污泥而不染 
+什么叫“出污泥而不染”呢？那就是程序员自己从缓存中挑拣出有用的信息，采用“挑三拣四”的输入函数（例如fgets()、fread()及文件定位函数fseek()、ftell()、rewind()、fgetpos()、fsetpos()）来读取换存，使不需要的信息难以被读取。这种方法听起来很好，但做起来难度非同寻常了。 
+
+2、	治本 
+治标的办法可能在小代码内很见效果，也最容易被人想到，但是，一旦问题变复杂了，使用治标的办法来解决无疑是隔靴挠痒，代码不能有很好的健壮性。其实，出现问题也主要是标准输入流的缓存机制造成的，若我们变被动为主动，直接对缓存本身进行相应操作以方便我们使用，那问题不就好解决多了吗？ 
+
+（以下摘自Stevens的《UNIX环境高级编程》第五章） 
+
+引用：对任何一个给定的流，如果我们并不喜欢这些系统默认，则可调用下列两个函数中的一个更改缓存类型： 
+#include <stdio.h>; 
+void setbuf(FILEf p*, char *b u f) ; 
+int setvbuf(FILEf p,* char *b u f, int m o d e, size_ts i z e) ; 
+返回：若成功则为0，若出错则为非0 
+这些函数一定要在流已被打开后调用（这是十分明显的，因为每个函数都要求一个有效的文件指针作为它们的第一个参数），而且也应在对该流执行任何一个其他操作之前调用。可以使用s e t b u f函数打开或关闭缓存机制。为了带缓存进行I / O，参数buf 必须指向一个长度为B U F S I Z的缓存（该常数定义在< s t d i o . h >;中）。通常在此之后该流就是全缓存的，但是如果该流与一个终端设备相关，那么某些系统也可将其设置为行缓存的。为了关闭缓存，将b u f设置为N U L L。 
+使用s e t v b u f，我们可以精确地说明所需的缓存类型。这是依靠m o d e参数实现的： 
+_IOFBF 全缓存 
+_IOLBF 行缓存 
+_IONBF 不带缓存 
+如果指定一个不带缓存的流，则忽略buf 和size 参数。如果指定全缓存或行缓存，则buf 和s i z e可以可选择地指定一个缓存及其长度。如果该流是带缓存的，而buf 是N U L L，则标准I / O库将自动地为该流分配适当长度的缓存。适当长度指的是由s t r u c t结构中的成员s t _ b l k s i z e所指定的值（见4 . 2节）。如果系统不能为该流决定此值（例如若此流涉及一个设备或一个管道），则分配长度为B U F S I Z的缓存。
+
+
+表5 - 1列出了这两个函数的动作，以及它们的各个选择项。 
+  
+
+这样一来，本文开头的两个例子就有很多修改的办法了。利用治本的方法解决改贴（http://bbs.chinaunix.net/forum/viewtopic.php?t=586176&show_type=&postdays=0&postorder=asc&start=0）中的一个问题。 
+#include <stdio.h>; 
+
+void main() 
+
+{ 
+
+int i,j; 
+
+char c; 
+
+printf("\n do you want to cal:y/n \n"); 
+
+
+
+while(c=getchar()=='y') 
+
+{ 
+
+                                  printf("input number:"); 
+
+   scanf("%d%d",&i,&j);   
+
+   printf("i*j=%d",i*j); 
+
+          } 
+
+}
+
+这个程序存在问题，这里使用setbuf()来“治疗”： 
+#include <stdio.h>;
+
+
+
+int main(void)
+
+{
+
+   int i,j;
+
+   char c;
+
+   printf("\n do you want to cal:y/n \n");
+
+
+
+   while (c=getchar()=='y')
+
+   {
+
+       printf("input number:");
+
+       scanf("%d%d",&i,&j);
+
+       printf("i*j=%d",i*j);
+
+       setbuf(stdin, NULL);
+
+       printf("\n do you want to cal:y/n \n");
+
+   }
+
+  /*system("pause");*/
+
+   return 0;
+
+}

@@ -1,0 +1,184 @@
+特殊变量列表
+变量	含义
+$0	当前脚本的文件名
+$n	传递给脚本或函数的参数。n 是一个数字，表示第几个参数。例如，第一个参数是$1，第二个参数是$2。
+$#	传递给脚本或函数的参数个数。
+$*	传递给脚本或函数的所有参数。
+$@	传递给脚本或函数的所有参数。被双引号(" ")包含时，与 $* 稍有不同，下面将会讲到。
+$?	上个命令的退出状态，或函数的返回值。
+$$	当前Shell进程ID。对于 Shell 脚本，就是这些脚本所在的进程ID。
+
+
+转义字符	含义
+\\	反斜杠
+\a	警报，响铃
+\b	退格（删除键）
+\f	换页(FF)，将当前位置移到下页开头
+\n	换行
+\r	回车
+\t	水平制表符（tab键） 
+\v	垂直制表符
+
+
+
+关系运算符列表
+运算符	说明	举例
+-eq	检测两个数是否相等，相等返回 true。	[ $a -eq $b ] 返回 true。
+-ne	检测两个数是否相等，不相等返回 true。	[ $a -ne $b ] 返回 true。
+-gt	检测左边的数是否大于右边的，如果是，则返回 true。	[ $a -gt $b ] 返回 false。
+-lt	检测左边的数是否小于右边的，如果是，则返回 true。	[ $a -lt $b ] 返回 true。
+-ge	检测左边的数是否大等于右边的，如果是，则返回 true。	[ $a -ge $b ] 返回 false。
+-le	检测左边的数是否小于等于右边的，如果是，则返回 true。	[ $a -le $b ] 返回 true。
+
+关系运算符只支持数字，不支持字符串，除非字符串的值是数字。
+
+
+
+算术运算符列表
+运算符	说明	举例
++	加法	`expr $a + $b`。
+-	减法	`expr $a - $b` 
+*	乘法	`expr $a \* $b`
+/	除法	`expr $b / $a`
+%	取余	`expr $b % $a`
+=	赋值	a=$b 将把变量 b 的值赋给 a。
+==	相等。用于比较两个数字，相同则返回 true。	[ $a == $b ]
+!=	不相等。用于比较两个数字，不相同则返回 true。	[ $a != $b ]
+
+
+
+布尔运算符列表
+运算符	说明	举例
+!	非运算，表达式为 true 则返回 false，否则返回 true。	[ ! false ] 返回 true。
+-o	或运算，有一个表达式为 true 则返回 true。	[ $a -lt 20 -o $b -gt 100 ] 返回 true。
+-a	与运算，两个表达式都为 true 才返回 true。	[ $a -lt 20 -a $b -gt 100 ] 返回 false。
+
+
+文件测试运算符列表
+操作符	说明	举例
+-b file	检测文件是否是块设备文件，如果是，则返回 true。	[ -b $file ] 返回 false。
+-c file	检测文件是否是字符设备文件，如果是，则返回 true。	[ -b $file ] 返回 false。
+-d file	检测文件是否是目录，如果是，则返回 true。	[ -d $file ] 返回 false。
+-f file	检测文件是否是普通文件（既不是目录，也不是设备文件），如果是，则返回 true。	[ -f $file ] 返回 true。
+-g file	检测文件是否设置了 SGID 位，如果是，则返回 true。	[ -g $file ] 返回 false。
+-k file	检测文件是否设置了粘着位(Sticky Bit)，如果是，则返回 true。	[ -k $file ] 返回 false。
+-p file	检测文件是否是具名管道，如果是，则返回 true。	[ -p $file ] 返回 false。
+-u file	检测文件是否设置了 SUID 位，如果是，则返回 true。	[ -u $file ] 返回 false。
+-r file	检测文件是否可读，如果是，则返回 true。	[ -r $file ] 返回 true。
+-w file	检测文件是否可写，如果是，则返回 true。	[ -w $file ] 返回 true。
+-x file	检测文件是否可执行，如果是，则返回 true。	[ -x $file ] 返回 true。
+-s file	检测文件是否为空（文件大小是否大于0），不为空返回 true。	[ -s $file ] 返回 true。
+-e file	检测文件（包括目录）是否存在，如果是，则返回 true。	[ -e $file ] 返回 true。
+
+
+
+单引号字符串的限制：
+单引号里的任何字符都会原样输出，单引号字符串中的变量是无效的；
+单引号字串中不能出现单引号（对单引号使用转义符后也不行）。
+
+双引号的优点：
+双引号里可以有变量
+双引号里可以出现转义字符
+
+if ... fi 语句；
+if ... else ... fi 语句；
+if ... elif ... else ... fi 语句。
+
+
+
+case 语句匹配一个值或一个模式，如果匹配成功，执行相匹配的命令。case语句格式如下：
+case 值 in
+模式1)
+    command1
+    command2
+    command3
+    ;;
+模式2）
+    command1
+    command2
+    command3
+    ;;
+*)
+    command1
+    command2
+    command3
+    ;;
+esac
+
+
+
+for循环一般格式为：
+for 变量 in 列表
+do
+    command1
+    command2
+    ...
+    commandN
+done
+列表是一组值（数字、字符串等）组成的序列，每个值通过空格分隔。每循环一次，就将列表中的下一个值赋给变量。
+
+
+
+
+while循环用于不断执行一系列命令，也用于从输入文件中读取数据；命令通常为测试条件。其格式为：
+while command
+do
+   Statement(s) to be executed if command is true
+done
+命令执行完毕，控制返回循环顶部，从头开始直至测试条件为假。
+
+
+until 循环执行一系列命令直至条件为 true 时停止。until 循环与 while 循环在处理方式上刚好相反。一般while循环优于until循环，但在某些时候，也只是极少数情况下，until 循环更加有用。
+	until 循环格式为：
+		until command
+		do
+		   Statement(s) to be executed until command is true
+		done
+command 一般为条件表达式，如果返回值为 false，则继续执行循环体内的语句，否则跳出循环。
+
+
+break命令
+break命令允许跳出所有循环（终止执行后面的所有循环）。
+break n 表示跳出n层循环
+
+
+
+continue命令
+continue命令与break命令类似，只有一点差别，它不会跳出所有循环，仅仅跳出当前循环。
+后接n，表示跳出n层循环
+
+
+
+Shell 也支持函数。
+Shell 函数的定义格式如下：
+function_name () {
+    list of commands
+    [ return value ]
+}
+如果你愿意，也可以在函数名前加上关键字 function：
+function function_name () {
+    list of commands
+    [ return value ]
+}
+函数返回值，可以显式增加return语句；如果不加，会将最后一条命令运行结果作为返回值。
+Shell 函数返回值只能是整数，一般用来表示函数执行成功与否，0表示成功，其他值表示失败。如果 return 其他数据，比如一个字符串，往往会得到错误提示：“numeric argument required”。
+如果一定要让函数返回字符串，那么可以先定义一个变量，用来接收函数的计算结果，脚本在需要的时候访问这个变量来获得函数返回值。
+
+
+
+
+全部可用的重定向命令列表
+命令	说明
+command > file		将输出重定向到 file。
+command < file		将输入重定向到 file。
+command >> file		将输出以追加的方式重定向到 file。
+n > file			将文件描述符为 n 的文件重定向到 file。
+n >> file			将文件描述符为 n 的文件以追加的方式重定向到 file。
+n >& m				将输出文件 m 和 n 合并。
+n <& m				将输入文件 m 和 n 合并。
+<< tag				将开始标记 tag 和结束标记 tag 之间的内容作为输入。
+
+
+
+
+
